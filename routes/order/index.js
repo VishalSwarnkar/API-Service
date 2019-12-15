@@ -1,5 +1,6 @@
 const express = require('express'); 
-const router  = express.Router(); 
+const router  = express.Router();
+const logger = require('../../logger'); 
 // const restaurant_records = require('./getAllRestaurants');
 
 const mongoose = require('mongoose');
@@ -8,7 +9,7 @@ const Order = require('../../Models/order');
 
 router.get('/', (req, res, next)=>{
     Order.find()
-    .select('productId quantity _id amount city')
+    .select('productId quantity _id amount city orderData')
     .exec()
     .then(result=>{
         res.status(200).json({
@@ -20,6 +21,7 @@ router.get('/', (req, res, next)=>{
                     quantity: order.quantity,
                     amount: order.amount,
                     city: order.city,
+                    date: order.orderData,
                     request: {
                         type: 'GET',
                         ur: 'http://localhost:3000/orders/' + order._id
@@ -30,6 +32,7 @@ router.get('/', (req, res, next)=>{
         });
     })
     .catch(err=>{
+        logger.error("Error in fetching all the records");
         res.status(500).json({
             error: err
         });
@@ -45,7 +48,6 @@ router.post('/', (req, res, next)=>{
         city: req.body.city
     })
     order.save().then(result=>{
-        console.log(result);
         res.status(201).json({
             message: "Order Stored",
             createdOrder: {
@@ -60,10 +62,17 @@ router.post('/', (req, res, next)=>{
                 ur: 'http://localhost:3000/orders/' + result._id
             }
         });
+        logger.info("Order Placed successfully", {
+            _id: result._id,
+            product: result.product,
+            quantity: result.quantity,
+            amount: result.amount,
+            city: result.city
+        });
     }).catch(err=>{
-        console.log(err);
+        logger.error("Error in placing the order", req.body);
         res.status(500).json({
-            error: err
+            error: err.message
         })
     })
     
@@ -74,13 +83,18 @@ router.get('/:orderId', (req, res, next) => {
     .then((orders)=>{
         res.statusCode = 200
         res.setHeader('Content-Type', 'application/json');
-        res.json(orders);
         res.status(200).json({
             message: 'Order details',
-            orderId: req.params.orderId
+            orderId: req.params.orderId,
+            orders: orders
         });
-    }, (err)=>next(err))
-    .catch((error)=>next(error));
+    })
+    .catch((err)=>{
+        logger.error(`Error in finding the order id ${req.params.orderId}`);
+        res.status(500).json({
+            error: err
+        })
+    });
 });
 
 router.delete('/:orderId', (req, res, next) => {
@@ -88,13 +102,17 @@ router.delete('/:orderId', (req, res, next) => {
     .then((resp)=>{
         res.statusCode = 200
         res.setHeader('Content-Type', 'application/json');
-        res.json(resp);
         res.status(200).json({
             message: 'Order deleted',
             orderId: req.params.orderId
         });
       }, (err)=>next(err))
-      .catch((error)=>next(error));
+      .catch((error)=>{
+        logger.error(`Error in deleting the order id ${req.params.orderId}`);
+        res.status(500).json({
+            error: err
+        })
+      });
 });
 
 router.put('/:orderId', (req, res, next) => {
@@ -104,13 +122,17 @@ router.put('/:orderId', (req, res, next) => {
       .then((orders)=>{
         res.statusCode = 200
         res.setHeader('Content-Type', 'application/json');
-        res.json(orders);
         res.status(200).json({
             message: 'Order Updated',
             orderId: req.params.orderId
         });
       }, (err)=>next(err))
-      .catch((error)=>next(error));
+      .catch((error)=>{
+        logger.error(`Error in updating the order id ${req.params.orderId}`);
+        res.status(500).json({
+            error: err
+        })
+      });
 });
 
 router.get('/restaurant/:restId/:city', (req, res, next)=>{
@@ -128,6 +150,8 @@ router.get('/restaurant/:restId/:city', (req, res, next)=>{
         });
     })
     .catch(err=>{
+        logger.error(`Error in total amount of the order for given resturant of the city 
+        ${req.params.restId} ${req.params.city}`)
         res.status(500).json({
             error: err
         });

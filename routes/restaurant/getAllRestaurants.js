@@ -12,8 +12,8 @@ var restaurants = {
                 {"location.city": req.query.city},
                 {"user_rating.aggregate_rating": req.query.rating},
                 {"Budget": req.query.budget},
-                {"cuisines": req.query.cuisines}
-                // {"menu[0].name": req.query.menu}
+                {"cuisines": req.query.cuisines},
+                {"menu.name": req.query.menu}
             ]
         })
         .select('_id id name location.city user_rating.aggregate_rating Budget cuisines menu')

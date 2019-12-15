@@ -13,7 +13,7 @@ var Schema = mongoose.Schema;
       required: true
     },
     location: {
-      type: String,
+      type: Map,
       required: true
     },
     category: {
