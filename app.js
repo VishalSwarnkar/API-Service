@@ -3,6 +3,7 @@ const express = require('express');
 const logger = require('./logger');
 var path = require('path');
 const restaurant = require('./routes/restaurant/');
+require('dotenv').config();
 
 const app = express();
 app.set('views', path.join(__dirname, 'views'));
